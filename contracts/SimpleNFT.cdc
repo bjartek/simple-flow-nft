@@ -4,26 +4,42 @@ import "UniversalCollection"
 
 access(all) contract interface SimpleNFT: NonFungibleToken{
 
-    access(all) identifier: String
     access(all) nftType:Type
 
     //TODO: here we cannot override the build in createEmptyCollection method because the post condition will fire in the wrong order
     access(all) fun createEmptyUniversalCollection(): @{NonFungibleToken.Collection} {
-        return <- UniversalCollection.createEmptyCollection(identifier: self.identifier, type: self.nftType)
+        return <- UniversalCollection.createEmptyCollection(type: self.nftType)
     }
 
     access(all) view fun getCollectionDisplay() : MetadataViews.NFTCollectionDisplay
 
+
+
+    access(all) resource interface NFT {
+        access(all) fun createEmptyCollection(): @{NonFungibleToken.Collection} {
+            return <- UniversalCollection.createEmptyCollection(type: self.getType())
+        }
+    }
+
+    access(all) resource interface DisplayableNFT:NFT{
+
+        access(all) name :String
+        access(all) description :String
+        access(all) thumbnail :String
+
+        access(all) fun resolveDisplay() : MetadataViews.Display {
+            return MetadataViews.Display(
+                name: self.name,
+                description: self.description,
+                thumbnail: MetadataViews.HTTPFile(
+                    url: self.thumbnail
+                )
+            )
+        }
+    }
+
     access(all) view fun getCollectionData() : MetadataViews.NFTCollectionData {
-        return MetadataViews.NFTCollectionData(
-            storagePath: StoragePath(identifier: self.identifier)!,
-            publicPath: PublicPath(identifier: self.identifier)!,
-            publicCollection: Type<&UniversalCollection.Collection>(),
-            publicLinkedType: Type<&UniversalCollection.Collection>(),
-            createEmptyCollectionFunction: (fun(): @{NonFungibleToken.Collection} {
-                return <-self.createEmptyCollection(nftType: self.nftType)
-            })
-        )
+        return UniversalCollection.getCollectionData(self.nftType)
     }
 
     /// Function that returns all the Metadata Views implemented by a Non Fungible Token
@@ -48,7 +64,7 @@ access(all) contract interface SimpleNFT: NonFungibleToken{
     access(all) fun resolveContractView(resourceType: Type?, viewType: Type): AnyStruct? {
         switch viewType {
         case Type<MetadataViews.NFTCollectionData>():
-            return self.getCollectionData()
+            return UniversalCollection.getCollectionData(self.nftType)
         case Type<MetadataViews.NFTCollectionDisplay>():
             return self.getCollectionDisplay()
         }

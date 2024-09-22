@@ -103,11 +103,29 @@ access(all) contract UniversalCollection {
         }
     }
 
+    access(all) view fun createIdentifier(_ type:Type): String {
+        let parts = type.identifier.split(separator:".")
+        return parts[1].concat("_").concat(parts[2])
+    }
+
+
+    access(all) view fun getCollectionData(_ type :Type) : MetadataViews.NFTCollectionData {
+        return MetadataViews.NFTCollectionData(
+            storagePath: StoragePath(identifier: UniversalCollection.createIdentifier(type))!,
+            publicPath: PublicPath(identifier: UniversalCollection.createIdentifier(type))!,
+            publicCollection: Type<&UniversalCollection.Collection>(),
+            publicLinkedType: Type<&UniversalCollection.Collection>(),
+            createEmptyCollectionFunction: (fun(): @{NonFungibleToken.Collection} {
+                return <-UniversalCollection.createEmptyCollection(type: type)
+            })
+        )
+    }
+
     /// Public function that anyone can call to create
     /// a new empty collection with the specified type restriction
     /// NFT contracts can include a call to this method in 
     /// their own createEmptyCollection method
-    access(all) fun createEmptyCollection(identifier: String, type: Type): @{NonFungibleToken.Collection} {
-        return <- create Collection(identifier: identifier, type:type)
+    access(all) fun createEmptyCollection(type: Type): @{NonFungibleToken.Collection} {
+        return <- create Collection(identifier: self.createIdentifier(type), type:type)
     }
 }
