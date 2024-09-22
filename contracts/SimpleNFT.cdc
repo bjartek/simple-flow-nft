@@ -7,7 +7,8 @@ access(all) contract interface SimpleNFT: NonFungibleToken{
     access(all) identifier: String
     access(all) nftType:Type
 
-    access(all) fun createEmptyCollection(nftType: Type): @{NonFungibleToken.Collection} {
+    //TODO: here we cannot override the build in createEmptyCollection method because the post condition will fire in the wrong order
+    access(all) fun createEmptyUniversalCollection(): @{NonFungibleToken.Collection} {
         return <- UniversalCollection.createEmptyCollection(identifier: self.identifier, type: self.nftType)
     }
 

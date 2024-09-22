@@ -92,6 +92,10 @@ access(all) contract BasicNFT : SimpleNFT{
         }
     }
 
+    access(all) fun createEmptyCollection(nftType: Type): @{NonFungibleToken.Collection} {
+        return <- BasicNFT.createEmptyUniversalCollection()
+    }
+
     init() {
         let minter <- create Minter()
         self.identifier="basicNFT"
